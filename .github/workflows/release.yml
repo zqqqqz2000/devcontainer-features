@@ -29,13 +29,17 @@ jobs:
           path: "feature"
           submodules: "recursive"
 
+      - name: Create Release
+        uses: ncipollo/release-action@v1.14.0
+
       # Runs a single command using the runners shell
       - name: Pack release
         run: |
           rm -r feature/.git && \
           rm -r feature/.github && \
           tar -cvzf devcontainer-feature-allinone.tgz feature
+
       - name: Upload release binaries
         uses: alexellis/upload-assets@0.4.0
         with:
-          asset_paths: '["./*.tgz"]'
+          asset_paths: '["*.tgz"]'
