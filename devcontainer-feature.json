@@ -1,7 +1,7 @@
 {
   "id": "allinone",
-  "version": "0.0.2",
-  "name": "feature-allinone",
+  "version": "0.0.7",
+  "name": "Dev AIO",
   "options": {
     "neovim": {
       "type": "boolean",
