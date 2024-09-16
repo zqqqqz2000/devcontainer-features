@@ -39,7 +39,7 @@ jobs:
         run: |
           rm -r feature/.git && \
           rm -r feature/.github && \
-          tar -cvzf devcontainer-feature-allinone.tgz feature
+          tar -cvzf devcontainer-feature-allinone.tgz -C feature .
 
       - name: Upload release binaries
         uses: alexellis/upload-assets@0.4.0
