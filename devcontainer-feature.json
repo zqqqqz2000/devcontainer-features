@@ -1,6 +1,6 @@
 {
   "id": "allinone",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "name": "feature-allinone",
   "options": {
     "neovim": {
