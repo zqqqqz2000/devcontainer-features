@@ -1,0 +1,3 @@
+[submodule "dotfile"]
+	path = dotfile
+	url = git@github.com:zqqqqz2000/dotfile.git

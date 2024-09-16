@@ -1,0 +1,22 @@
+{
+  "id": "feature-allinone",
+  "version": "0.0.1",
+  "name": "feature-allinone",
+  "options": {
+    "neovim": {
+      "type": "boolean",
+      "default": true,
+      "description": "If support neovim"
+    },
+    "zsh": {
+      "type": "boolean",
+      "default": true,
+      "description": "If support zsh with oh-my-zsh and plugins"
+    },
+    "tmux": {
+      "type": "boolean",
+      "default": true,
+      "description": "If support tmux with plugins"
+    }
+  }
+}
