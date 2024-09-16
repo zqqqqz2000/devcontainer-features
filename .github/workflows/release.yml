@@ -31,9 +31,9 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Pack release
-        run: >
-          rm -r feature/.git
-          tar -cvzf devcontainer-feature-allinone.tgz feature
+        run: |
+          rm -r feature/.git && \
+          tar -cvzf devcontainer-feature-allinone.tgz feature && \
           ls -alh
       - name: Upload release binaries
         uses: alexellis/upload-assets@0.4.0
