@@ -30,9 +30,12 @@ jobs:
           path: "feature"
 
       # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: tar -cvzf devcontainer-feature-allinone.tgz feature
+      - name: Pack release
+        run: >
+          rm -r feature/.git
+          tar -cvzf devcontainer-feature-allinone.tgz feature
+          ls -alh
       - name: Upload release binaries
         uses: alexellis/upload-assets@0.4.0
         with:
-          asset_paths: '["devcontainer-feature-allinone.tgz"]'
+          asset_paths: '["*.tgz"]'
