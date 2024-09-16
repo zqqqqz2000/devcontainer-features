@@ -9,7 +9,7 @@ All default value is true
 ```json
 {
   "features": {
-    "git@github.com:zqqqqz2000/devcontainer-features.git": {
+    "https://github.com/zqqqqz2000/devcontainer-features/releases/download/1.0.1/devcontainer-feature-allinone.tgz": {
       "enable_neovim": false,
       "enable_zsh": false,
       "enable_tmux": false
