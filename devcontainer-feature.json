@@ -1,19 +1,19 @@
 {
   "id": "allinone",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "name": "Dev AIO",
   "options": {
-    "neovim": {
+    "enable_neovim": {
       "type": "boolean",
       "default": true,
       "description": "If support neovim"
     },
-    "zsh": {
+    "enable_zsh": {
       "type": "boolean",
       "default": true,
       "description": "If support zsh with oh-my-zsh and plugins"
     },
-    "tmux": {
+    "enable_tmux": {
       "type": "boolean",
       "default": true,
       "description": "If support tmux with plugins"
