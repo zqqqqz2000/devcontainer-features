@@ -62,65 +62,6 @@ install_packages() {
   fi
 }
 
-# If in automatic mode, determine if a user already exists, if not use root
-detect_user() {
-  local user_variable_name=${1:-username}
-  local possible_users=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
-  if [ "${!user_variable_name}" = "auto" ] || [ "${!user_variable_name}" = "automatic" ]; then
-    declare -g ${user_variable_name}=""
-    for current_user in ${possible_users[@]}; do
-      if id -u "${current_user}" >/dev/null 2>&1; then
-        declare -g ${user_variable_name}="${current_user}"
-        break
-      fi
-    done
-  fi
-  if [ "${!user_variable_name}" = "" ] || [ "${!user_variable_name}" = "none" ] || ! id -u "${!user_variable_name}" >/dev/null 2>&1; then
-    declare -g ${user_variable_name}=root
-  fi
-}
-
-# Figure out correct version of a three part version number is not passed
-find_version_from_git_tags() {
-  local variable_name=$1
-  local requested_version=${!variable_name}
-  if [ "${requested_version}" = "none" ]; then return; fi
-  local repository=$2
-  # Normally a "v" is used before the version number, but support alternate cases
-  local prefix=${3:-"tags/v"}
-  # Some repositories use "_" instead of "." for version number part separation, support that
-  local separator=${4:-"."}
-  # Some tools release versions that omit the last digit (e.g. go)
-  local last_part_optional=${5:-"false"}
-  # Some repositories may have tags that include a suffix (e.g. actions/node-versions)
-  local version_suffix_regex=$6
-
-  local escaped_separator=${separator//./\\.}
-  local break_fix_digit_regex
-  if [ "${last_part_optional}" = "true" ]; then
-    break_fix_digit_regex="(${escaped_separator}[0-9]+)?"
-  else
-    break_fix_digit_regex="${escaped_separator}[0-9]+"
-  fi
-  local version_regex="[0-9]+${escaped_separator}[0-9]+${break_fix_digit_regex}${version_suffix_regex//./\\.}"
-  # If we're passed a matching version number, just return it, otherwise look for a version
-  if ! echo "${requested_version}" | grep -E "^${versionMatchRegex}$" >/dev/null 2>&1; then
-    local version_list="$(git ls-remote --tags ${repository} | grep -oP "${prefix}\\K${version_regex}$" | tr -d ' ' | tr "${separator}" "." | sort -rV)"
-    if [ "${requested_version}" = "latest" ] || [ "${requested_version}" = "current" ] || [ "${requested_version}" = "lts" ]; then
-      declare -g ${variable_name}="$(echo "${version_list}" | head -n 1)"
-    else
-      set +e
-      declare -g ${variable_name}="$(echo "${version_list}" | grep -E -m 1 "^${requested_version//./\\.}([\\.\\s]|${version_suffix_regex//./\\.}|$)")"
-      set -e
-    fi
-    if [ -z "${!variable_name}" ] || ! echo "${version_list}" | grep "^${!variable_name//./\\.}$" >/dev/null 2>&1; then
-      echo -e "Invalid ${variable_name} value: ${requested_version}\nValid values:\n${version_list}" >&2
-      exit 1
-    fi
-  fi
-  echo "Adjusted ${variable_name}=${!variable_name}"
-}
-
 # Soft version matching that resolves a version for a given package in the *current apt-cache*
 # Return value is stored in first argument (the unprocessed version)
 apt_cache_version_soft_match() {
@@ -225,46 +166,4 @@ create_or_update_file() {
   if [ ! -e "$1" ] || [[ "$(cat "$1")" != *"$2"* ]]; then
     echo "$2" >>"$1"
   fi
-}
-
-# Use semver logic to decrement a version number then look for the closest match
-find_prev_version_from_git_tags() {
-  local variable_name=$1
-  local current_version=${!variable_name}
-  local repository=$2
-  # Normally a "v" is used before the version number, but support alternate cases
-  local prefix=${3:-"tags/v"}
-  # Some repositories use "_" instead of "." for version number part separation, support that
-  local separator=${4:-"."}
-  # Some tools release versions that omit the last digit (e.g. go)
-  local last_part_optional=${5:-"false"}
-  # Some repositories may have tags that include a suffix (e.g. actions/node-versions)
-  local version_suffix_regex=$6
-  # Try one break fix version number less if we get a failure. Use "set +e" since "set -e" can cause failures in valid scenarios.
-  set +e
-  major="$(echo "${current_version}" | grep -oE '^[0-9]+' || echo '')"
-  minor="$(echo "${current_version}" | grep -oP '^[0-9]+\.\K[0-9]+' || echo '')"
-  breakfix="$(echo "${current_version}" | grep -oP '^[0-9]+\.[0-9]+\.\K[0-9]+' 2>/dev/null || echo '')"
-
-  if [ "${minor}" = "0" ] && [ "${breakfix}" = "0" ]; then
-    ((major = major - 1))
-    declare -g ${variable_name}="${major}"
-    # Look for latest version from previous major release
-    find_version_from_git_tags "${variable_name}" "${repository}" "${prefix}" "${separator}" "${last_part_optional}"
-  # Handle situations like Go's odd version pattern where "0" releases omit the last part
-  elif [ "${breakfix}" = "" ] || [ "${breakfix}" = "0" ]; then
-    ((minor = minor - 1))
-    declare -g ${variable_name}="${major}.${minor}"
-    # Look for latest version from previous minor release
-    find_version_from_git_tags "${variable_name}" "${repository}" "${prefix}" "${separator}" "${last_part_optional}"
-  else
-    ((breakfix = breakfix - 1))
-    if [ "${breakfix}" = "0" ] && [ "${last_part_optional}" = "true" ]; then
-      declare -g ${variable_name}="${major}.${minor}"
-    else
-      declare -g ${variable_name}="${major}.${minor}.${breakfix}"
-    fi
-  fi
-
-  set -e
 }

@@ -1,7 +1,5 @@
-#!/bin/bash
+#!/bin/sh
 set -e
-FEATURE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "${FEATURE_DIR}"
 
 # Default options
 ENABLE_NEOVIM="${ENABLE_NEOVIM:-"true"}"
@@ -20,25 +18,27 @@ fi
 cp -r dotfile/. ~/
 rm -r ~/.git
 
-apt_get_update_if_exists
-
 echo "installing utils"
 check_command gcc gcc "build-base" "devtoolset-8-gcc"
 check_command unzip unzip unzip unzip
 check_command bat bat bat bat
 check_command curl "curl ca-certificates" "curl ca-certificates" "curl ca-certificates"
 check_command wget wget wget wget
-check_command netcat-openbsd netcat-openbsd netcat netcat
+check_command nc netcat-openbsd netcat-openbsd nc
 check_command socat socat socat socat
 check_command htop htop htop htop
 check_command xargs findutils findutils findutils
 check_command git git git git
 check_command xz xz-utils xz xz
+check_command chsh chsh shadow util-linux-user
+check_command bash bash bash bash
 
 if [ "${ENABLE_ZSH}" == "true" ]; then
   echo "configuring zsh"
   check_command zsh zsh zsh zsh
-  chsh -s $(which zsh)
+
+  # this will failure on alpine
+  chsh -s $(which zsh) || true
   sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
   cp dotfile/.zshrc ~/.zshrc
   zsh -c 'git clone https://github.com/jeffreytse/zsh-vi-mode ~/.oh-my-zsh/custom/plugins/zsh-vi-mode'
