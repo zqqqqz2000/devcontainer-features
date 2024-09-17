@@ -23,6 +23,7 @@ rm -r ~/.git
 apt_get_update_if_exists
 
 echo "installing utils"
+check_command gcc "build-base" gcc "devtoolset-8-gcc"
 check_command unzip unzip unzip unzip
 check_command bat bat bat bat
 check_command curl "curl ca-certificates" "curl ca-certificates" "curl ca-certificates"
