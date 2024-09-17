@@ -33,7 +33,7 @@ check_command xz xz-utils xz xz
 check_command chsh chsh shadow util-linux-user
 check_command bash bash bash bash
 
-if [ "${ENABLE_ZSH}" == "true" ]; then
+if [ "${ENABLE_ZSH}" = "true" ]; then
   echo "configuring zsh"
   check_command zsh zsh zsh zsh
 
@@ -44,7 +44,7 @@ if [ "${ENABLE_ZSH}" == "true" ]; then
   zsh -c 'git clone https://github.com/jeffreytse/zsh-vi-mode ~/.oh-my-zsh/custom/plugins/zsh-vi-mode'
 fi
 
-if [ "${ENABLE_TMUX}" == "true" ]; then
+if [ "${ENABLE_TMUX}" = "true" ]; then
   echo "configuring tmux"
   check_command tmux tmux tmux tmux
   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
@@ -58,13 +58,13 @@ if [ "${ENABLE_TMUX}" == "true" ]; then
   tmux kill-server
 fi
 
-if [ "${ENABLE_NEOVIM}" == "true" ]; then
+if [ "${ENABLE_NEOVIM}" = "true" ]; then
   echo "configuring neovim"
   curl -LO https://github.com/neovim/neovim/releases/download/v0.10.1/nvim-linux64.tar.gz
   rm -rf /opt/nvim
   tar -C /opt -xzf nvim-linux64.tar.gz
   rm nvim*.tar.gz
-  if [ "${ENABLE_ZSH}" == "true" ]; then
+  if [ "${ENABLE_ZSH}" = "true" ]; then
     echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >>~/.zshrc
   else
     echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >>~/.bashrc
