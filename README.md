@@ -24,5 +24,7 @@ All default value is true, `.devcontainer/devcontainer.json`:
 }
 ```
 
+```bash
 devcontainer up --workspace-folder .
 devcontainer exec --workspace-folder . zsh
+```
