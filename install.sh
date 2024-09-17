@@ -33,6 +33,14 @@ check_command xz xz-utils xz xz
 check_command chsh chsh shadow util-linux-user
 check_command bash bash bash bash
 
+install_lazygit() {
+  LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+  tar xf lazygit.tar.gz lazygit
+  rm lazygit.tar.gz
+  sudo install lazygit /usr/local/bin
+}
+
 if [ "${ENABLE_ZSH}" = "true" ]; then
   echo "configuring zsh"
   check_command zsh zsh zsh zsh
@@ -47,6 +55,7 @@ fi
 if [ "${ENABLE_TMUX}" = "true" ]; then
   echo "configuring tmux"
   check_command tmux tmux tmux tmux
+  check_command rg ripgrep ripgrep ripgrep
   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
   # start a server but don't attach to it
   tmux start-server
@@ -61,6 +70,7 @@ fi
 if [ "${ENABLE_NEOVIM}" = "true" ]; then
   echo "configuring neovim"
   curl -LO https://github.com/neovim/neovim/releases/download/v0.10.1/nvim-linux64.tar.gz
+  install_lazygit
   rm -rf /opt/nvim
   tar -C /opt -xzf nvim-linux64.tar.gz
   rm nvim*.tar.gz

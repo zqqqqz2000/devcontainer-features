@@ -2,9 +2,15 @@
 
 Install basic devtools and tmux/neovim/zsh with basic configure.
 
+Currently support alpine/debian based image.
+
 ## Example Usage
 
-All default value is true
+```bash
+npm install -g @devcontainers/cli
+```
+
+All default value is true, `.devcontainer/devcontainer.json`:
 
 ```json
 {
@@ -17,3 +23,6 @@ All default value is true
   }
 }
 ```
+
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . zsh
