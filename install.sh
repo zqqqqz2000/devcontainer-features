@@ -38,7 +38,7 @@ install_lazygit() {
   curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
   tar xf lazygit.tar.gz lazygit
   rm lazygit.tar.gz
-  sudo install lazygit /usr/local/bin
+  install lazygit /usr/local/bin
 }
 
 if [ "${ENABLE_ZSH}" = "true" ]; then
