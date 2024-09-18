@@ -15,7 +15,7 @@ All default value is true, `.devcontainer/devcontainer.json`:
 ```json
 {
   "features": {
-    "https://github.com/zqqqqz2000/devcontainer-features/releases/download/1.0.1/devcontainer-feature-allinone.tgz": {
+    "https://github.com/zqqqqz2000/devcontainer-features/releases/latest/download/devcontainer-feature-allinone.tgz": {
       "enable_neovim": false,
       "enable_zsh": false,
       "enable_tmux": false
