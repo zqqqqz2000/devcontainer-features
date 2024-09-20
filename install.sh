@@ -18,6 +18,24 @@ fi
 cp -r dotfile/. ~/
 rm -r ~/.git
 
+install_gh() {
+  GH_REPO="https://cli.github.com/packages/rpm/gh-cli.repo"
+  if type dnf >/dev/null 2>&1; then
+    dnf config-manager --add-repo $GH_REPO
+  elif type yum >/dev/null 2>&1; then
+    yum-config-manager --add-repo $GH_REPO
+  fi
+  check_command gh gh "github-cli" gh
+}
+
+install_lazygit() {
+  LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+  tar xf lazygit.tar.gz lazygit
+  rm lazygit.tar.gz
+  install lazygit /usr/local/bin
+}
+
 echo "installing utils"
 check_command gcc gcc "build-base" "devtoolset-8-gcc"
 check_command unzip unzip unzip unzip
@@ -32,14 +50,13 @@ check_command git git git git
 check_command xz xz-utils xz xz
 check_command chsh chsh shadow util-linux-user
 check_command bash bash bash bash
-
-install_lazygit() {
-  LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
-  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
-  tar xf lazygit.tar.gz lazygit
-  rm lazygit.tar.gz
-  install lazygit /usr/local/bin
-}
+check_command xclip xclip xclip xclip
+install_gh
+# check token if set
+if [ -z "${GHTHUB_TOKEN}" ]; then
+  gh auth login --with-token ${GHTHUB_TOKEN}
+  gh extension install github/gh-copilot
+fi
 
 if [ "${ENABLE_ZSH}" = "true" ]; then
   echo "configuring zsh"
