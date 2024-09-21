@@ -18,10 +18,9 @@
       "default": true,
       "description": "If support tmux with plugins"
     },
-    "github_token": {
+    "github_auth_token": {
       "type": "string",
-      "description": "github token set for copilot",
-      "default": ""
+      "description": "github token set for copilot"
     }
   }
 }

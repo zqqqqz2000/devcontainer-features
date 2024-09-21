@@ -60,8 +60,9 @@ fi
 install_gh
 
 # check token if set
-if [ -n "${GHTHUB_TOKEN}" ]; then
-  echo ${GHTHUB_TOKEN} | gh auth login --with-token
+if [ -n "${GITHUB_AUTH_TOKEN}" ]; then
+  echo config github cli with copilot
+  echo ${GITHUB_AUTH_TOKEN} | gh auth login --with-token
   gh extension install github/gh-copilot
 fi
 
