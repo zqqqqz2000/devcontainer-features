@@ -51,10 +51,17 @@ check_command xz xz-utils xz xz
 check_command chsh chsh shadow util-linux-user
 check_command bash bash bash bash
 check_command xclip xclip xclip xclip
+
+# for the reason alpine grep is from busybox
+# not support -P option
+if type apk >/dev/null 2>&1; then
+  apk add grep
+fi
 install_gh
+
 # check token if set
-if [ -z "${GHTHUB_TOKEN}" ]; then
-  gh auth login --with-token ${GHTHUB_TOKEN}
+if [ -n "${GHTHUB_TOKEN}" ]; then
+  echo ${GHTHUB_TOKEN} | gh auth login --with-token
   gh extension install github/gh-copilot
 fi
 
