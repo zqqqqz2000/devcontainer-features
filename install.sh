@@ -19,6 +19,9 @@ fi
 
 username=$USER
 
+check_command sudo sudo sudo sudo
+check_command bash bash bash bash
+
 # Create or update a non-root user to match UID/GID.
 if [ "${CREATE_USER}" != "ignore" ]; then
   if [ "${ADJUSTED_ID}" = "alpine" ]; then
@@ -52,6 +55,9 @@ if [ "${CREATE_USER}" != "ignore" ]; then
       useradd -s /bin/bash --uid $USER_UID --gid $username -m $username
     fi
   fi
+  # Add add sudo support for non-root user
+  echo $username ALL=\(root\) NOPASSWD:ALL >/etc/sudoers.d/$username
+  chmod 0440 /etc/sudoers.d/$username
 fi
 
 cp -r dotfile/. ~/
@@ -98,9 +104,10 @@ check_command chsh chsh shadow util-linux-user
 check_command bash bash bash bash
 check_command xclip xclip xclip xclip
 
-# for the reason alpine grep is from busybox
-# not support -P option
-if type apk >/dev/null 2>&1; then
+if [ "${ADJUSTED_ID}" = "alpine" ]; then
+  # for the reason alpine grep/tar is from busybox
+  apk add tar
+  # not support -P option
   apk add grep
 fi
 
@@ -120,8 +127,8 @@ if [ "${ENABLE_ZSH}" = "true" ]; then
   check_command zsh zsh zsh zsh
 
   # this will failure on alpine
+  chsh -s $(which zsh) ${username} || true
   su -l $username -c '
-    chsh -s $(which zsh) || true
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     cp /tmp/dotfile/.zshrc ~/.zshrc
     zsh -c "git clone https://github.com/jeffreytse/zsh-vi-mode ~/.oh-my-zsh/custom/plugins/zsh-vi-mode"
@@ -148,8 +155,8 @@ fi
 
 if [ "${ENABLE_NEOVIM}" = "true" ]; then
   echo "configuring neovim"
-  curl -LO https://github.com/neovim/neovim/releases/download/v0.10.1/nvim-linux64.tar.gz
   install_lazygit
+  curl -LO https://github.com/neovim/neovim/releases/download/v0.10.1/nvim-linux64.tar.gz
   rm -rf /opt/nvim
   tar -C /opt -xzf nvim-linux64.tar.gz
   rm nvim*.tar.gz
