@@ -111,11 +111,10 @@ if [ "${ADJUSTED_ID}" = "alpine" ]; then
   apk add grep
 fi
 
-install_gh
-
 # check token if set
 if [ -n "${GITHUB_AUTH_TOKEN}" ]; then
   echo config github cli with copilot
+  install_gh
   su -l $username -c "
     echo ${GITHUB_AUTH_TOKEN} | gh auth login --with-token
     gh extension install github/gh-copilot
