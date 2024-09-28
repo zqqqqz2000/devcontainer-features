@@ -14,9 +14,55 @@ fi
 # Import common utils
 . ./utils.sh
 
-# Copy dotfile to home
+# Detect os
+. ./detectos.sh
+
+username=$USER
+
+# Create or update a non-root user to match UID/GID.
+if [ "${CREATE_USER}" != "ignore" ]; then
+  if [ "${ADJUSTED_ID}" = "alpine" ]; then
+    apk add shadow
+  fi
+  groupname="${CREATE_USER}"
+  username="${CREATE_USER}"
+  echo "Creating or updating user '$username' with GID '$USER_GID' and UID '$USER_UID'..."
+  if id -u ${username} >/dev/null 2>&1; then
+    # User exists, update if needed
+    echo "User exists, updating..."
+    if [ "${USER_GID}" != "automatic" ] && [ "$USER_GID" != "$(id -g $username)" ]; then
+      groupname="$(id -gn $username)"
+      groupmod --gid $USER_GID ${groupname}
+      usermod --gid $USER_GID $username
+    fi
+    if [ "${USER_UID}" != "automatic" ] && [ "$USER_UID" != "$(id -u $username)" ]; then
+      usermod --uid $USER_UID $username
+    fi
+  else
+    # Create user
+    echo "User does not exist, creating..."
+    if [ "${USER_GID}" = "automatic" ]; then
+      groupadd $username
+    else
+      groupadd --gid $USER_GID $username
+    fi
+    if [ "${USER_UID}" = "automatic" ]; then
+      useradd -s /bin/bash --gid $username -m $username
+    else
+      useradd -s /bin/bash --uid $USER_UID --gid $username -m $username
+    fi
+  fi
+fi
+
 cp -r dotfile/. ~/
 rm -r ~/.git
+cp -r dotfile /tmp/
+
+# Copy dotfile to home
+su -l $username -c '
+  cp -r /tmp/dotfile/. ~/
+  rm -r ~/.git
+'
 
 install_gh() {
   GH_REPO="https://cli.github.com/packages/rpm/gh-cli.repo"
@@ -29,8 +75,8 @@ install_gh() {
 }
 
 install_lazygit() {
-  LAZYGIT_VERSION="v0.44.1"
-  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+  LAZYGIT_VERSION="0.44.1"
+  curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
   tar xf lazygit.tar.gz lazygit
   rm lazygit.tar.gz
   install lazygit /usr/local/bin
@@ -57,13 +103,16 @@ check_command xclip xclip xclip xclip
 if type apk >/dev/null 2>&1; then
   apk add grep
 fi
+
 install_gh
 
 # check token if set
 if [ -n "${GITHUB_AUTH_TOKEN}" ]; then
   echo config github cli with copilot
-  echo ${GITHUB_AUTH_TOKEN} | gh auth login --with-token
-  gh extension install github/gh-copilot
+  su -l $username -c "
+    echo ${GITHUB_AUTH_TOKEN} | gh auth login --with-token
+    gh extension install github/gh-copilot
+  "
 fi
 
 if [ "${ENABLE_ZSH}" = "true" ]; then
@@ -71,25 +120,30 @@ if [ "${ENABLE_ZSH}" = "true" ]; then
   check_command zsh zsh zsh zsh
 
   # this will failure on alpine
-  chsh -s $(which zsh) || true
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-  cp dotfile/.zshrc ~/.zshrc
-  zsh -c 'git clone https://github.com/jeffreytse/zsh-vi-mode ~/.oh-my-zsh/custom/plugins/zsh-vi-mode'
+  su -l $username -c '
+    chsh -s $(which zsh) || true
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    cp /tmp/dotfile/.zshrc ~/.zshrc
+    zsh -c "git clone https://github.com/jeffreytse/zsh-vi-mode ~/.oh-my-zsh/custom/plugins/zsh-vi-mode"
+  '
 fi
 
 if [ "${ENABLE_TMUX}" = "true" ]; then
   echo "configuring tmux"
   check_command tmux tmux tmux tmux
   check_command rg ripgrep ripgrep ripgrep
-  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-  # start a server but don't attach to it
-  tmux start-server
-  # create a new session but don't attach to it either
-  tmux new-session -d
-  # install the plugins
-  ~/.tmux/plugins/tpm/scripts/install_plugins.sh
-  # killing the server is not required, I guess
-  tmux kill-server
+
+  su -l $username -c "
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+    # start a server but don't attach to it
+    tmux start-server
+    # create a new session but don't attach to it either
+    tmux new-session -d
+    # install the plugins
+    ~/.tmux/plugins/tpm/scripts/install_plugins.sh
+    # killing the server is not required, I guess
+    tmux kill-server
+  "
 fi
 
 if [ "${ENABLE_NEOVIM}" = "true" ]; then
@@ -99,16 +153,21 @@ if [ "${ENABLE_NEOVIM}" = "true" ]; then
   rm -rf /opt/nvim
   tar -C /opt -xzf nvim-linux64.tar.gz
   rm nvim*.tar.gz
-  if [ "${ENABLE_ZSH}" = "true" ]; then
+
+  if [ "${USER}" = "${username}" ]; then
     echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >>~/.zshrc
-  else
     echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >>~/.bashrc
+  else
+    echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >>/home/${username}/.zshrc
+    echo 'export PATH="$PATH:/opt/nvim-linux64/bin"' >>/home/${username}/.bashrc
   fi
-  export PATH="$PATH:/opt/nvim-linux64/bin"
+
   # Retry to ensure veovim install all plugins success
-  nvim --headless -c 'lua require("lazy").install({ wait = true, show = false, concurrency = 20 })' +qa &&
-    nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa &&
-    nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa &&
-    nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa &&
-    nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa
+  su -l $username -c "
+    /opt/nvim-linux64/bin/nvim --headless -c 'lua require("lazy").install({ wait = true, show = false, concurrency = 20 })' +qa &&
+      /opt/nvim-linux64/bin/nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa &&
+      /opt/nvim-linux64/bin/nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa &&
+      /opt/nvim-linux64/bin/nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa &&
+      /opt/nvim-linux64/bin/nvim --headless -c 'lua require("lazy").update({ wait = true, show = false, concurrency = 20 })' +qa
+  "
 fi

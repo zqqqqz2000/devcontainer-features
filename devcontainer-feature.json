@@ -21,6 +21,21 @@
     "github_auth_token": {
       "type": "string",
       "description": "github token set for copilot"
+    },
+    "create_user": {
+      "type": "string",
+      "default": "dev",
+      "description": "If create user, this options can be 'ignore' or '[username]', default 'dev' (create a username 'dev')"
+    },
+    "user_uid": {
+      "type": "string",
+      "default": "1000",
+      "description": "The user uid, ignore if create_user is 'ignore' or value is 'automatic'"
+    },
+    "user_gid": {
+      "type": "string",
+      "default": "1000",
+      "description": "The user gid, ignore if create_user is 'ignore' or value is 'automatic'"
     }
   }
 }
